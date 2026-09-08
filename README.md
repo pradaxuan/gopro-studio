@@ -206,6 +206,9 @@ gopro_studio/
 
 <img width="1246" height="688" alt="screenshot-2026-09-08_13-43-27" src="https://github.com/user-attachments/assets/eeda6a12-7324-4578-b99b-a3eadd232667" />
 
+## Live demo on YouTube
+https://youtu.be/HIqeX9Pfd3g
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
