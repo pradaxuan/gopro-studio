@@ -1,0 +1,134 @@
+Metadata-Version: 2.4
+Name: gopro-studio
+Version: 0.1.0
+Summary: Synchronized multi-GoPro USB control for record-then-import FreeMoCap rigs
+Requires-Python: <3.14,>=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: open-gopro>=0.15.0
+Requires-Dist: textual>=0.60
+
+# GoPro Studio
+
+A small terminal app for controlling a rig of GoPros over USB from Linux (or macOS/Windows):
+connect, push identical settings, start/stop recording in sync, and pull the footage into
+per-camera session folders — ready to hand to FreeMoCap's **SkellySync** for frame-accurate
+alignment and 3D reconstruction.
+
+It does **not** try to replace SkellySync's alignment — GoPros have no hardware genlock, so this
+app focuses on getting all cameras rolling as close together as command-level sync allows
+(typically well under a frame of skew over USB), and lets you clap or flash at the start of each
+take so SkellySync's audio-cross-correlation / brightness-flash detection can nail exact
+frame alignment on import.
+
+Built on GoPro's official [`open-gopro`](https://gopro.github.io/OpenGoPro/python_sdk/) Python
+SDK, using its `WiredGoPro` (USB HTTP) transport — no BLE/WiFi contention with 6 cameras.
+
+## How it works
+
+Each GoPro Hero9+ enumerates over USB as its own network interface (RNDIS/CDC-ECM) with its own
+private subnet, so a powered USB hub can host several cameras at once, each independently
+addressable over HTTP. The app talks to all of them concurrently with asyncio:
+
+- **Connect**: opens a `WiredGoPro` session to every configured camera in parallel.
+- **Push settings**: loads the Video preset and sets identical resolution/fps on every camera
+  (consistent settings across views matters more for triangulation quality than shaving a
+  few extra ms off sync).
+- **Synced start/stop**: every camera is "armed" first; a shared barrier then releases all of
+  them in the same event-loop tick, so the shutter command goes out to all 6 as close together
+  as the USB stack allows — the same pattern GoPro's own official multi-camera demo uses.
+- **Download**: pulls new files off each camera's SD card into `<output_dir>/<session>/<label>/`.
+
+## Install (Linux)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+Requires Python 3.11–3.13.
+
+## Set up your rig
+
+Plug in all 6 cameras via the powered USB hub, power them on, then either scan for them:
+
+```bash
+gopro-studio-setup discover
+```
+
+or add them by hand (the serial is the last 3-4 digits shown under the camera's
+Settings > About screen, which also matches the tail of its default WiFi SSID):
+
+```bash
+gopro-studio-setup add 5124 cam1_front
+gopro-studio-setup add 8871 cam2_left
+# ...etc for all 6
+gopro-studio-setup output ~/GoProStudio/sessions
+gopro-studio-setup list
+```
+
+This writes `~/.config/gopro_studio/config.json`. Default settings are 4K/60 — edit
+`resolution`/`fps` in that file to any of the `VideoResolution` / `FramesPerSecond` values from
+`gopro_studio/rig.py` if you want something else (e.g. `NUM_5_3K` / `NUM_30_0`).
+
+## Run it
+
+```bash
+gopro-studio
+```
+
+Keyboard shortcuts (also available as buttons): `c` connect all, `s` push settings,
+`r` start recording (synced), `x` stop recording (synced), `d` download session,
+`q` quit. Set the session name in the text field before downloading — files land in
+`<output_dir>/<session_name>/<camera_label>/`.
+
+Typical take:
+1. `c` to connect, `s` to push settings once at the start of a shoot.
+2. `r` to start — the moment recording confirms on all cameras, clap or flash.
+3. Perform the capture.
+4. `x` to stop.
+5. Repeat `r`/`x` for more takes; when done, `d` to download everything.
+
+## Linux networking notes
+
+- The kernel's `rndis_host`/`cdc_ether` drivers handle GoPro's USB network interfaces
+  automatically on virtually all modern distros — no special udev rules needed.
+- NetworkManager should auto-configure each camera's interface. If `gopro-studio-setup discover`
+  finds nothing but `lsusb` shows all 6 cameras, check `ip addr` for `usbX`/`enxX` interfaces
+  without an IP, and that NetworkManager isn't set to ignore USB interfaces
+  (`nmcli device status`).
+- A **quality powered USB hub matters** — GoPro engineers have noted that at large camera counts,
+  powered hubs "tend to enumerate flakily," recommending PCIe USB cards instead for 80-camera
+  rigs. At 6 cameras a decent powered hub is normally fine, but if you see intermittent
+  connect failures, try splitting cameras across two hubs/host controllers rather than daisy
+  chaining.
+
+## Feeding into FreeMoCap
+
+1. After downloading, each camera's clips live in their own subfolder under the session
+   directory.
+2. Run FreeMoCap's `skelly_synchronize` (SkellySync in the FreeMoCap v2 UI) against that
+   session folder — pick audio cross-correlation (recommended if you clapped) or brightness
+   detection (if you used a flash).
+3. Import the resulting synchronized, frame-trimmed videos into FreeMoCap as usual for
+   calibration and 3D reconstruction.
+
+## Project layout
+
+```
+gopro_studio/
+  rig.py         # Camera + Rig: connect, settings, synced start/stop, download
+  discover.py    # mDNS scan for connected cameras
+  config.py      # JSON config (serials, labels, output dir, resolution/fps)
+  app.py         # Textual TUI
+  setup_cli.py   # gopro-studio-setup CLI for managing config.json
+```
+
+## Extending
+
+- `Rig.apply_settings_all` / `Camera.apply_video_settings` are the place to push more than
+  resolution/fps (shutter, ISO, lens/FOV, white balance) — see `HttpSettings` in the
+  `open-gopro` package for the full list of settings exposed over USB.
+- The synced-start barrier lives in `Rig.synced_start` / `Camera._arm_and_fire` — if you want a
+  physical trigger (footswitch, MIDI pad) instead of a keybinding, hook it to call
+  `app.run_start_recording()`.

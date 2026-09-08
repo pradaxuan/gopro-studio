@@ -1,0 +1,3 @@
+[console_scripts]
+gopro-studio = gopro_studio.app:main
+gopro-studio-setup = gopro_studio.setup_cli:main

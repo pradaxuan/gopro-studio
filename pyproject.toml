@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gopro-studio"
+version = "0.1.0"
+description = "ILP Labs GoPro Studio: synchronized multi-GoPro USB control for record-then-import FreeMoCap rigs"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "open-gopro>=0.15.0",
+    "textual>=0.60",
+]
+
+[project.scripts]
+gopro-studio = "gopro_studio.app:main"
+gopro-studio-setup = "gopro_studio.setup_cli:main"
+
+[tool.setuptools]
+packages = ["gopro_studio"]
+
+[tool.setuptools.package-data]
+gopro_studio = ["data/*.json"]

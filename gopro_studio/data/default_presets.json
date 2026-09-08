@@ -1,0 +1,26 @@
+{
+  "presets": {
+    "Skelly Mocap": {
+      "resolution": "NUM_1080",
+      "fps": "NUM_60_0",
+      "lens": "LINEAR",
+      "stabilization": "OFF",
+      "bit_rate": "HIGH",
+      "bit_depth": "NUM_8_BIT",
+      "anti_flicker": "NUM_50HZ",
+      "aspect_ratio": "NUM_16_9"
+    },
+    "HMC Stereo": {
+      "aspect_ratio": "NUM_9_16",
+      "resolution": "NUM_1080",
+      "fps": "NUM_50_0",
+      "lens": "WIDE",
+      "stabilization": "OFF"
+    }
+  },
+  "preset_notes": {
+    "Skelly Mocap": "Tuned for FreeMoCap: Linear lens keeps distortion close to a standard pinhole model for calibration, stabilization OFF is required (in-camera stabilization invalidates a fixed calibration), 60fps caps exposure to reduce motion blur. Anti-flicker set to 50Hz for EU/UK mains - change to 60Hz if shooting on 60Hz power.",
+    "HMC Stereo": "Set by hand on each camera: Protune ON, White Balance 4500K, ISO 300, Shutter 1/200 (no remote API for these on GoPro - Protune/ISO/white balance/shutter speed can't be pushed from the app)."
+  },
+  "quick_presets": ["Skelly Mocap", "HMC Stereo"]
+}

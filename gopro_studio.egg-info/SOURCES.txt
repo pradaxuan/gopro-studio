@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+gopro_studio/__init__.py
+gopro_studio/__main__.py
+gopro_studio/app.py
+gopro_studio/config.py
+gopro_studio/discover.py
+gopro_studio/rig.py
+gopro_studio/setup_cli.py
+gopro_studio.egg-info/PKG-INFO
+gopro_studio.egg-info/SOURCES.txt
+gopro_studio.egg-info/dependency_links.txt
+gopro_studio.egg-info/entry_points.txt
+gopro_studio.egg-info/requires.txt
+gopro_studio.egg-info/top_level.txt
