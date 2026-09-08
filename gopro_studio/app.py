@@ -65,6 +65,8 @@ class ConfirmModal(ModalScreen[bool]):
     }
     """
 
+    BINDINGS = [("escape", "cancel_modal", "Cancel")]
+
     def __init__(self, message: str, confirm_label: str = "Confirm") -> None:
         super().__init__()
         self.message = message
@@ -79,6 +81,9 @@ class ConfirmModal(ModalScreen[bool]):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.dismiss(event.button.id == "confirm")
+
+    def action_cancel_modal(self) -> None:
+        self.dismiss(False)
 
 
 class CameraManagerModal(ModalScreen[bool]):
@@ -107,7 +112,7 @@ class CameraManagerModal(ModalScreen[bool]):
         align: left middle;
     }
     .camera_row .cam_serial {
-        width: 24;
+        width: 12;
         color: $text-muted;
     }
     .camera_row Input {
@@ -117,12 +122,16 @@ class CameraManagerModal(ModalScreen[bool]):
     .camera_row Button {
         margin-left: 1;
     }
+    .move_btn {
+        width: 5;
+        min-width: 5;
+        margin-left: 0;
+    }
     #add_row {
         height: auto;
         align: left middle;
         margin-bottom: 1;
         border-bottom: solid $accent;
-        padding-bottom: 1;
     }
     #add_row Input {
         width: 1fr;
@@ -130,23 +139,25 @@ class CameraManagerModal(ModalScreen[bool]):
     }
     #feedback {
         height: auto;
-        padding: 0 0 1 0;
         color: $text-muted;
     }
     #close_row {
-        dock: bottom;
         height: auto;
         align: right middle;
-        background: $surface;
-        padding-top: 1;
+        margin-top: 1;
         border-top: solid $accent;
     }
     """
+
+    BINDINGS = [("escape", "close_modal", "Close")]
 
     def __init__(self, config: dict[str, Any]) -> None:
         super().__init__()
         self.config = config
         self._changed = False
+
+    def action_close_modal(self) -> None:
+        self.dismiss(self._changed)
 
     def compose(self) -> ComposeResult:
         with VerticalScroll(id="camera_dialog"):
@@ -155,15 +166,19 @@ class CameraManagerModal(ModalScreen[bool]):
                 yield Input(placeholder="serial (last 3-4 digits or full)", id="new_serial_input")
                 yield Input(placeholder="label, e.g. cam1", id="new_label_input")
                 yield Button("Add camera", id="add_camera", variant="success")
+                yield Button("Sort A-Z", id="sort_az")
             yield Static("", id="feedback")
-            if not self.config["cameras"]:
+            cameras = self.config["cameras"]
+            if not cameras:
                 yield Static("[dim]No cameras configured yet - add one above.[/]", markup=True)
-            for cam in self.config["cameras"]:
+            for i, cam in enumerate(cameras):
                 serial = cam["serial"]
+                short_serial = f"…{serial[-6:]}" if len(serial) > 6 else serial
                 with Horizontal(classes="camera_row"):
-                    yield Static(serial, classes="cam_serial")
+                    yield Static(short_serial, classes="cam_serial")
                     yield Input(value=cam["label"], id=f"label__{serial}")
-                    yield Button("Rename", id=f"rename__{serial}")
+                    yield Button("↑", id=f"up__{serial}", classes="move_btn", disabled=(i == 0))
+                    yield Button("↓", id=f"down__{serial}", classes="move_btn", disabled=(i == len(cameras) - 1))
                     yield Button("Remove", id=f"remove__{serial}", variant="error")
             with Horizontal(id="close_row"):
                 yield Button("Close", id="close", variant="primary")
@@ -193,23 +208,41 @@ class CameraManagerModal(ModalScreen[bool]):
         if event.input.id in ("new_serial_input", "new_label_input"):
             await self._add_camera()
 
+    def on_input_changed(self, event: Input.Changed) -> None:
+        input_id = event.input.id or ""
+        if input_id.startswith("label__"):
+            serial = input_id.removeprefix("label__")
+            new_label = event.value.strip()
+            if not new_label:
+                return
+            cfg.add_camera(self.config, serial, new_label)
+            cfg.save(self.config)
+            self._changed = True
+
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         button_id = event.button.id or ""
         if button_id == "close":
             self.dismiss(self._changed)
         elif button_id == "add_camera":
             await self._add_camera()
-        elif button_id.startswith("rename__"):
-            serial = button_id.removeprefix("rename__")
-            label_input = self.query_one(f"#label__{serial}", Input)
-            new_label = label_input.value.strip()
-            if not new_label:
-                self._feedback("[yellow]Label can't be empty.[/]")
-                return
-            cfg.add_camera(self.config, serial, new_label)
+        elif button_id == "sort_az":
+            cfg.sort_cameras_alphabetically(self.config)
             cfg.save(self.config)
             self._changed = True
-            self._feedback(f"[green]Renamed {serial} to '{new_label}'.[/]")
+            await self.recompose()
+            self._feedback("[green]Sorted alphabetically by name.[/]")
+        elif button_id.startswith("up__"):
+            serial = button_id.removeprefix("up__")
+            cfg.move_camera(self.config, serial, -1)
+            cfg.save(self.config)
+            self._changed = True
+            await self.recompose()
+        elif button_id.startswith("down__"):
+            serial = button_id.removeprefix("down__")
+            cfg.move_camera(self.config, serial, 1)
+            cfg.save(self.config)
+            self._changed = True
+            await self.recompose()
         elif button_id.startswith("remove__"):
             serial = button_id.removeprefix("remove__")
             cfg.remove_camera(self.config, serial)
@@ -271,11 +304,9 @@ class SettingsModal(ModalScreen[Optional[tuple[dict[str, str], Optional[str]]]])
         margin-left: 1;
     }
     #button_row {
-        dock: bottom;
         height: auto;
         align: right middle;
-        background: $surface;
-        padding-top: 1;
+        margin-top: 1;
         border-top: solid $accent;
     }
     #button_row Button {
@@ -283,11 +314,16 @@ class SettingsModal(ModalScreen[Optional[tuple[dict[str, str], Optional[str]]]])
     }
     """
 
+    BINDINGS = [("escape", "cancel_modal", "Cancel")]
+
     def __init__(self, config: dict[str, Any]) -> None:
         super().__init__()
         self.config = config
         # button id -> preset name, built in compose(), used by on_button_pressed
         self._quick_buttons: dict[str, str] = {}
+
+    def action_cancel_modal(self) -> None:
+        self.dismiss(None)
 
     def compose(self) -> ComposeResult:
         with VerticalScroll(id="settings_dialog"):

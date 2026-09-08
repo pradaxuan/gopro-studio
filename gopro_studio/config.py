@@ -83,6 +83,23 @@ def remove_camera(config: dict[str, Any], serial: str) -> None:
     config["cameras"] = [c for c in config["cameras"] if c["serial"] != serial]
 
 
+def sort_cameras_alphabetically(config: dict[str, Any]) -> None:
+    config["cameras"].sort(key=lambda c: c["label"].lower())
+
+
+def move_camera(config: dict[str, Any], serial: str, direction: int) -> None:
+    """Move a camera up (direction=-1) or down (direction=+1) in the list.
+    No-op if it's already at that end - callers don't need to check bounds
+    themselves."""
+    cams: list[CameraEntry] = config["cameras"]
+    idx = next((i for i, c in enumerate(cams) if c["serial"] == serial), None)
+    if idx is None:
+        return
+    new_idx = idx + direction
+    if 0 <= new_idx < len(cams):
+        cams[idx], cams[new_idx] = cams[new_idx], cams[idx]
+
+
 def save_preset(config: dict[str, Any], name: str, settings: dict[str, str]) -> None:
     config.setdefault("presets", {})[name] = dict(settings)
 
