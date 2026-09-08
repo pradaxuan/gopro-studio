@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Local runtime data - config lives in ~/.config/gopro_studio, not the repo,
+# but ignore it here too in case anyone runs the app from inside the repo dir
+camera_cache.json
+*.log
+activate_environment.md
