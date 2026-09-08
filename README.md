@@ -16,6 +16,9 @@ Built on GoPro's official [`open-gopro`](https://gopro.github.io/OpenGoPro/pytho
 SDK, using its `WiredGoPro` (USB HTTP) transport — no BLE/WiFi contention with 6+ cameras — and
 [Textual](https://github.com/Textualize/textual) for the terminal UI.
 
+<img width="1246" height="688" alt="screenshot-2026-09-08_13-40-48" src="https://github.com/user-attachments/assets/9fc1b55b-420b-4ec0-ad68-b726fba0a87c" />
+
+
 ## Features
 
 - **Synced start/stop** across all connected cameras using a ready/go barrier (same pattern
@@ -178,6 +181,30 @@ gopro_studio/
   `app.run_start_recording()`.
 - `takelog.append_take_record` is a plain function taking an output dir and a dict — easy to call
   from anywhere else you might want to log additional metadata.
+
+## Visual guide
+
+- Launch the app.
+- Click on add cameras. Here you can add yuour cameras based on their serial number and re-name them, order them and dele them.
+
+<img width="1246" height="688" alt="screenshot-2026-09-08_13-41-13" src="https://github.com/user-attachments/assets/37303ebc-818d-4025-9027-4f598aede5f5" />
+
+- Click on connec all. On the top, you will see the state and battery levels for all connected cameras.
+
+<img width="1246" height="688" alt="screenshot-2026-09-08_13-41-36" src="https://github.com/user-attachments/assets/1ed1b8e3-6724-4490-817d-e1eabfff5d11" />
+
+- Click on settings. here you can manually control the settings all of your cameras at once, create and load presets, and delete unwanted presets. Two presets are created for you, one for freemoca (Skelly Mocap) and one for Metahumans (HMC Stereo).
+
+<img width="1246" height="688" alt="screenshot-2026-09-08_13-41-48" src="https://github.com/user-attachments/assets/ae388eb0-7393-474a-bd89-a43b8e398569" />
+
+- Click on record to start a new session, and click on stop to stop the recording.
+- Click on download to transfer the files from all cameras and the recording log to a desired working directory.
+
+<img width="1256" height="701" alt="screenshot-2026-09-08_13-43-09" src="https://github.com/user-attachments/assets/a124247e-115b-4140-8c83-cb21b37f71b0" />
+
+- Click on format SD cards to delete all the footage in all the cameras at once.
+
+<img width="1246" height="688" alt="screenshot-2026-09-08_13-43-27" src="https://github.com/user-attachments/assets/eeda6a12-7324-4578-b99b-a3eadd232667" />
 
 ## License
 
