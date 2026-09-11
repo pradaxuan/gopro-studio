@@ -185,7 +185,7 @@ gopro_studio/
 ## Visual guide
 
 - Launch the app.
-- Click on add cameras. Here you can add yuour cameras based on their serial number and re-name them, order them and dele them.
+- Click on add cameras. Here you can add your cameras based on their serial number and re-name them, order them and dele them.
 
 <img width="1246" height="688" alt="screenshot-2026-09-08_13-41-13" src="https://github.com/user-attachments/assets/37303ebc-818d-4025-9027-4f598aede5f5" />
 
