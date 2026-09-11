@@ -44,7 +44,7 @@ SDK, using its `WiredGoPro` (USB HTTP) transport — no BLE/WiFi contention with
 ## Install
 
 ```bash
-git clone https://github.com/<your-org>/gopro-studio.git
+git clone https://github.com/<your-org>/gopro-studio.git](https://github.com/pradaxuan/gopro-studio.git
 cd gopro-studio
 python3 -m venv .venv
 source .venv/bin/activate
